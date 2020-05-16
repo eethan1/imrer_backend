@@ -2,8 +2,7 @@ var {models} = require('./model');
 var express = require('express');
 var bodyparser = require('body-parser');
 var app = express();
-var {User,Team,Player,Game,Record} = models;
-
+var {HOST, PORT} = require('./config');
 
 
 app.use(bodyparser());
@@ -21,6 +20,6 @@ app.all('/', function(req, res) {
     res.status(404).send('JIzz found');
 });
 
-app.listen(8787,'127.0.0.1',function(){
-    console.log(`listen on 127.0.0.1:8787`);
+app.listen(PORT,HOST,function(){
+    console.log(`listen on ${HOST}:${PORT}`);
 });
