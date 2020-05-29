@@ -20,7 +20,9 @@ var RecordSchema = new Schema({
         {type: Schema.Types.ObjectId, ref: 'Player', required:true}
     ], // 其他和這個 event 相關的人，得分的話相關的人就是助攻之類ㄉ
     comment:{type:String, default:''}, // 使用者對這個 play 的評論
-    value:{type:Number, default:50} // 使用者對這個 play 的評分，會從 A,B,C 轉成數值儲存
+    value:{type:Number, default:50}, // 使用者對這個 play 的評分，會從 A,B,C 轉成數值儲存
+    x_loc:{type:Number, default:-1}, // 發生的座標， -1 代表場外(技術犯規、換人之類的)
+    y_loc:{type:Number, default:-1},
 });
 
 RecordSchema.method('withAll', async function(){

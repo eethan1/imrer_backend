@@ -84,6 +84,8 @@ router.post('/:gid/record', async function(req, res) {
         sub_type: req.body.sub_type,
         maker: req.body.maker && ObjectId(req.body.maker),
         relateds: req.body.relateds && req.body.relateds.map(x=>ObjectId(x)),
+        x_loc: req.body.x_loc,
+        y_loc: req.body.y_loc,
         comment: req.body.comment,
         value: req.body.value
     };
@@ -119,6 +121,8 @@ router.post('/:gid/records', async function(req, res) {
                 sub_type: e.sub_type,
                 maker: e.maker && ObjectId(e.maker),
                 relateds: e.relateds && e.relateds.map(x=>ObjectId(x)),
+                x_loc: e.x_loc,
+                y_loc: e.y_loc,
                 comment: e.comment,
                 value: e.value
             };
