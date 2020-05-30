@@ -3,6 +3,16 @@ var express = require('express');
 var bodyparser = require('body-parser');
 var app = express();
 var {HOST, PORT} = require('./config');
+var cors = require('cors');
+
+const corsOptions = {
+    origin:`*`
+    ,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
 
 
 app.use(bodyparser());
