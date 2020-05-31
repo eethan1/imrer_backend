@@ -18,13 +18,16 @@ router.post('/login', function(req, res) {
     }
     User.findOne(cred, null, function(err, user) {
         if(err) {
-            return res.status(401).send({status:'failed', msg:err.message});
+            return res.status(500).send({status:'error', msg:err.message});
         }
         console.log(user)
+        if(user === null) {
+            return res.status(401).send({status: 'failed'});
+        }
         user.session = randomstring.generate(32);
         user.save(function(err) {
             if(err) {
-                return res.send({status:'failed',msg:err.message});
+                return res.status(500).send({status:'failed',msg:err.message});
             }
             console.log(user);
             res.cookie('session', user.session);
