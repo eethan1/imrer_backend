@@ -80,6 +80,7 @@ router.post('/:gid/record', async function(req, res) {
     let record = {
         date: req.body.date,
         time: req.body.time,
+        quarter: req.body.quarter,
         event: req.body.event,
         sub_type: req.body.sub_type,
         maker: req.body.maker && ObjectId(req.body.maker),
@@ -117,6 +118,7 @@ router.post('/:gid/records', async function(req, res) {
             let record = {
                 date: e.date,
                 time: e.time,
+                quarter: e.quarter,
                 event: e.event,
                 sub_type: e.sub_type,
                 maker: e.maker && ObjectId(e.maker),
