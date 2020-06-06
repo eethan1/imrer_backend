@@ -141,7 +141,7 @@ router.post('/:gid/records', async function(req, res) {
 
 
 // TODO: 水平權限
-router.get(':gid', async function(req, res) {
+router.get('/:gid', async function(req, res) {
     return res.send(await Game.findOne({_id:req.params.gid}).exec());
 });
 

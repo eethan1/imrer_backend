@@ -17,7 +17,7 @@ var RecordSchema = new Schema({
     sub_type: {type:String, default:null}, // 次事件，描述事件，像是打手、得兩分
     maker: {type: Schema.Types.ObjectId, ref: 'Player', required:true}, // 造成犯規/得分/助攻之類的人
     relateds: [
-        {type: Schema.Types.ObjectId, ref: 'Player', required:true}
+        {type: Schema.Types.ObjectId, ref: 'Player', required:false}
     ], // 其他和這個 event 相關的人，得分的話相關的人就是助攻之類ㄉ
     comment:{type:String, default:''}, // 使用者對這個 play 的評論
     value:{type:Number, default:50}, // 使用者對這個 play 的評分，會從 A,B,C 轉成數值儲存
