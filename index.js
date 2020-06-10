@@ -2,7 +2,7 @@ var {models} = require('./model');
 var express = require('express');
 var bodyparser = require('body-parser');
 var app = express();
-var {HOST, PORT} = require('./config');
+var {HOST, PORT} = require('config');
 var cors = require('cors');
 
 const corsOptions = {

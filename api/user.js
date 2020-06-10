@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var {User, Team} = require('../model').models;
+var {User, Team} = require('model').models;
 router.route('/user')
     .get(async function(req, res) {
         console.log('user');

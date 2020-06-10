@@ -1,18 +1,13 @@
 var express = require('express');
 var router = express.Router();
-var {Team,Game,Player, User} = require('../model').models;
+var {Team,Game,Player, User} = require('model').models;
 var ObjectId = require('mongoose').Types.ObjectId
 
 router.post('/team/self/player', async function(req, res) {
     if( await req.user() && req.user.team) {
         let team = req.user.team;
-        let player = new Player({
-            name:req.body.name,
-            grade:req.body.grade,
-            birth:req.body.birth,
-            number:req.body.number,
-            position: req.body.position
-        });
+        req.body.creater = req.user._id;
+        let player = new Player(req.body);
         player.save(function(err) {
             if(err) {
                 return res.status(400).send({status:'failed',msg:err.message}).end();
@@ -35,17 +30,7 @@ router.post('/team/self/player', async function(req, res) {
 router.post('/team/self/game',async function(req, res) {
         if(await req.user() && req.user.team) {
             let team = req.user.team;
-            let game = new Game({
-                date:   req.body.date,
-                championship:   req.body.championship,
-                name:   req.body.name,
-                guest:  req.body.guest,
-                master: req.body.master,
-                m_players: req.body.m_players && req.body.m_players.map(x=>ObjectId(x)),
-                g_players: req.body.g_players && req.body.g_players.map(x=>ObjectId(x)),
-                g_point:req.body.g_point,
-                m_point:req.body.m_point,
-            });
+            let game = new Game(req.body);
             console.log('converted',team);
             game.save(function(err) {
                 if(err) {

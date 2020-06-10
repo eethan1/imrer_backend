@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var randomstring = require('randomstring');
-var {User} = require('../model').models;
+var {User} = require('model').models;
 
 
 router.post('/register', function(req ,res){
@@ -51,8 +51,17 @@ router.use('', function(req,res,next){
     }
     next();
 });
-
+async function authUser(req, res, next) {
+    if(await req.user()) {
+        next();
+    } else {
+        return res.status(403).send({status:'failed',msg:'user not auth'}).end();
+    }
+}
 
 module.exports = {
-    router:router
+    router:router,
+    middlewares:{
+        requirdeAuth: authUser
+    }
 };

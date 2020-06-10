@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var {Game, Player, Record} = require('../model').models;
+var {Game, Player, Record} = require('model').models;
 var ObjectId = require('mongoose').Types.ObjectId;
 
 router.post('/game/:gid/m_player', async function(req, res) {
