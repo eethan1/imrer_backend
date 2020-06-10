@@ -5,6 +5,8 @@ module.exports = {
             name:'team'
         }, {
             name:'game'
-        }
+        },{
+            name:'record'
+        },
     ]
 }

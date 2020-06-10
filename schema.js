@@ -46,15 +46,17 @@ var GameSchema = new Schema({
         }
     ], // 客場的球員們
     m_players:[
-        new Schema({
+        {
             number: {type:Number, default:-1}, // 背號
             player: {type: Schema.Types.ObjectId, ref: 'Player', required:false} // 球員
-        })
+        }
     ], // 主場的球員們
     g_point: {type: Number, default:0}, // 客隊得分
     m_point: {type: Number, default:0}, // 主隊得分
     confirm: {type:Boolean, default:false}, // 紀錄是否確認
-    records:[RecordSchema] // 擁有的紀錄們
+    records:[
+        {type: Schema.Types.ObjectId, ref: 'Record', required:false}
+    ], // 擁有的紀錄們
 });
 
 GameSchema.method('getPlayers', async function() {
@@ -68,9 +70,8 @@ GameSchema.method('getRecords', async function(){
 });
 
 GameSchema.method('withAll', async function(){
-    await this.getPlayers();
-    await this.getRecords();
-    return this
+    await this.populate('g_players').populate('m_players').populate('records').execPopulate();
+    return this;
 });
 
 GameSchema.method('findById', async function(_id){

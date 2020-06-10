@@ -3,11 +3,7 @@ var router = express.Router();
 var {Team,Game,Player, User} = require('../model').models;
 var ObjectId = require('mongoose').Types.ObjectId
 
-router.get('/asd',function(req, res) {
-    res.send(Object.keys(Team.schema));
-});
-
-router.post('/self/player', async function(req, res) {
+router.post('/team/self/player', async function(req, res) {
     if( await req.user() && req.user.team) {
         let team = req.user.team;
         let player = new Player({
@@ -36,7 +32,7 @@ router.post('/self/player', async function(req, res) {
         return res.status(400).send({status:'failed'});   
 });
 
-router.post('/self/game',async function(req, res) {
+router.post('/team/self/game',async function(req, res) {
         if(await req.user() && req.user.team) {
             let team = req.user.team;
             let game = new Game({
@@ -69,7 +65,7 @@ router.post('/self/game',async function(req, res) {
         }
     })
 
-router.get('/self', async function(req, res) {
+router.get('/team/self', async function(req, res) {
     console.log('jizz');
     if(await req.user()){
         if(req.user.team)
@@ -80,7 +76,7 @@ router.get('/self', async function(req, res) {
 });
 
 
-router.route('/:teamid')
+router.route('/team/:teamid')
     .get(async function(req, res) {
         let team = Team.findById(req.params.teamid, null).exec();
         console.log(team);
@@ -88,7 +84,7 @@ router.route('/:teamid')
     });
 
 
-router.route('')
+router.route('/teams')
     .get(async function(req, res) {
         let team = await Team.find({}, null).populate('games').populate('players').exec();
         console.log(team);

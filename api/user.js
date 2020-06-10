@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var {User, Team} = require('../model').models;
-router.route('')
+router.route('/user')
     .get(async function(req, res) {
         console.log('user');
             await User.findOne({},'-password -session').populate('team').exec(function(err, user) {
@@ -27,7 +27,7 @@ router.route('')
         }
     });
 
-router.get('/self', async function(req, res) {
+router.get('/user/self', async function(req, res) {
     
     if(await req.user())
         return res.send(req.user);
@@ -36,17 +36,17 @@ router.get('/self', async function(req, res) {
 });
 
 
-router.get('/self/team', async function(req, res) {
+router.get('/user/self/team', async function(req, res) {
     req.url = '/api/team/self';
     req.app.handle(req, res);
 });
 
-router.get('/self/team/games', async function(req, res) {
+router.get('/user/self/team/games', async function(req, res) {
     req.url = '/api/team/self/games';
     req.app.handle(req, res);
 });
 
-router.post('/self/team', async function(req, res) {
+router.post('/user/self/team', async function(req, res) {
     let team = {
         name:req.body.name,
         sport_type:req.body.sport_type,

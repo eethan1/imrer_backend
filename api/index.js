@@ -6,7 +6,7 @@ var auth = require('./auth');
 router.use('/api',auth.router);
 
 apis.forEach(api => {
-    router.use(`/api/${api.name}`, require(`./${api.name}`));
+    router.use(`/api`, require(`./${api.name}`));
 });
 
 module.exports = router;
