@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var {Game, Player, Record} = require('../model').models;
-var ObjectId = require('mongoose').Types.ObjectId
+var ObjectId = require('mongoose').Types.ObjectId;
 
 router.post('/game/:gid/m_player', async function(req, res) {
     let user = req.user;
@@ -50,6 +50,7 @@ router.post('/game/:gid/record', async function(req, res) {
         let game = await Game.findById(gid).exec();
         if(game) {
             let record = await Record.create(req.body);
+            game.records.push(record._id);
             game.save(async function(err) {
                 if(err) {
                     return res.status(400).send({status:'failed',msg:err.message}).end();
