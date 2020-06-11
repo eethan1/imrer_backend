@@ -1,4 +1,6 @@
+global.middlewares = {}
 module.exports = {
     HOST: '127.0.0.1',
-    PORT: 8787
+    PORT: 8787,
+    MODE: 'DEBUG',
 }

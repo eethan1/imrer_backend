@@ -79,6 +79,7 @@ GameSchema.method('findById', async function(_id){
 });
 
 var PlayerSchema = new Schema({
+    creater: {type: Schema.Types.ObjectId, ref: 'User'},
     name: {type: String, required: true}, // 背號
     grade: {type: String, required: true}, // 年級
     birth: {type: Date, default: Date.now}, // 生日
@@ -92,7 +93,7 @@ var TeamSchema =  new Schema({
     lose:   {type:Number, default:0}, // 敗場
     tie:   {type:Number, default:0}, // 平手場
     sport_type: String, // 運動類型
-    description: String, // 隊伍自介
+    description: {type:String, default:''}, // 隊伍自介
     players: [{type: Schema.Types.ObjectId, ref: 'Player'}], // 擁有的球員們
     games: [{type: Schema.Types.ObjectId, ref: 'Game'}], // 擁有的比賽們
     e_score: {type:Number, default:50}, // 隊伍綜合戰力之類的東東

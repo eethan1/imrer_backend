@@ -55,13 +55,11 @@ async function authUser(req, res, next) {
     if(await req.user()) {
         next();
     } else {
-        return res.status(403).send({status:'failed',msg:'user not auth'}).end();
+        console.log('none');
+        return res.status(403).send({status:'failed',msg:'user not loggined'}).end();
     }
 }
-
+global.middlewares.requiredLoggined = authUser;
 module.exports = {
     router:router,
-    middlewares:{
-        requirdeAuth: authUser
-    }
 };
