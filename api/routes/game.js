@@ -17,6 +17,18 @@ router.route('/games')
 
 
 router.use('/game',global.middlewares.requiredLoggined);
+router.delete('/game/:gid', async function(req, res){
+    Game.deleteOne({_id: res.params.gid}, function(err, result){
+        if (err) {
+            res.send(err);
+        }
+        else {
+            res.send(result);
+        }
+    })
+    
+})
+
 router.post('/game/:gid/m_player', async function(req, res) {
     let user = req.user;
     let gid = req.params.gid, pid = req.body.pid, number = req.body.number;
@@ -61,6 +73,30 @@ router.post('/game/:gid/g_player', async function(req, res) {
     }
 });
 
+
+router.put('/game/:gid/g_point', async function(req, res) {
+    let gid = req.params.gid, new_point = req.body.point;
+    Game.update({_id: gid}, {g_point: new_point}, function(err, result){
+        if(err){
+            res.status(400).send({status:'failed',msg:err.message})
+        }
+        else{
+            res.send(result);
+        }
+    })
+});
+
+router.put('/game/:gid/m_point', async function(req, res) {
+    let gid = req.params.gid, new_point = req.body.point;
+    Game.update({_id: gid}, {m_point: new_point}, function(err, result){
+        if(err){
+            res.status(400).send({status:'failed',msg:err.message})
+        }
+        else{
+            res.send(result);
+        }
+    })
+});
 
 router.post('/game/:gid/record', async function(req, res) {
     let gid = req.params.gid;
