@@ -18,7 +18,7 @@ router.route('/games')
 
 router.use('/game',global.middlewares.requiredLoggined);
 router.delete('/game/:gid', async function(req, res){
-    Game.deleteOne({_id: res.params.gid}, function(err, result){
+    Game.deleteOne({_id: req.params.gid}, function(err, result){
         if (err) {
             res.send(err);
         }
