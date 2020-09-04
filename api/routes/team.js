@@ -65,7 +65,6 @@ router.post('/team/self/game',async function(req, res) {
     })
 
 router.get('/team/self', async function(req, res) {
-    console.log('jizz');
     if(req.user.team)
         await req.user.team.withAll();
     return res.send(req.user.team);
