@@ -13,7 +13,7 @@ var RecordSchema = new Schema({
     time:{type:Number, required:true, min:0}, // 在比賽中的第幾秒，單位 sec
     score_team:{type:String, default:'none'}, // 得分方 (ally, enemy, none)
     event: {type:String, default:'score'}, // 事件 (ATK, BLOCK, SET, SERVE, RCV, NONE)
-    maker: {type:Schema.Types.ObjectId, ref: 'Player', required:true}, // 造成犯規/得分/助攻之類的人
+    maker: {type:Schema.Types.ObjectId, ref: 'Player', required:false}, // 造成犯規/得分/助攻之類的人
     quality:{type:Number, default:50}, // 使用者對這個 play 的評分，會從 A,B,C 轉成數值儲存
     x_loc:{type:Number, default:-1}, // 發生的座標， -1 代表場外(技術犯規、換人之類的)
     y_loc:{type:Number, default:-1},

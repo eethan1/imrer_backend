@@ -29,6 +29,88 @@ router.delete('/game/:gid', async function(req, res){
     
 })
 
+router.post('/game/:gid/confirm', async function(req, res){
+    let gid = req.params.gid
+    if(req.user.team.games.includes(gid)){
+        let game = await Game.findById(gid).exec();
+        console.log(game);
+        game.confirm = true
+        game.save(function(err) {
+            if(err) {
+                return res.status(400).send({status:'failed',msg:err.message});       
+            }
+            return res.send(game);
+        });
+    }
+    else{
+        return res.status(400).send({status:'failed',msg:'game not owned'});
+    }
+})
+
+router.get('/game/:gid/m_scores', async function(req, res){
+    let gid = req.params.gid;
+    if(req.user.team.games.includes(gid)){
+        let game = await Game.findById(gid).exec();
+        await game.getRecords();
+        let records = game.records;
+        let m = 0;
+        let g = 0;
+        let m_scores = [];
+        for(var i in records){
+            let record = records[i];
+            if(record.score_team == "ally"){
+                m += 1;
+            }
+            else if (record.score_team == "enemy"){
+                g += 1;
+            }
+            if((m >= 25 || g >= 25) && (m - g >= 2 || g - m >= 2)){
+                m_scores.push(m);
+                m = 0;
+                g = 0;
+            }
+        }
+        if(!game.confirm)
+            m_scores.push(m);
+        return res.send(m_scores);
+    }
+    else{
+        return res.status(400).send({status:'failed',msg:'game not owned'});
+    }
+})
+
+router.get('/game/:gid/g_scores', async function(req, res){
+    let gid = req.params.gid;
+    if(req.user.team.games.includes(gid)){
+        let game = await Game.findById(gid).exec();
+        await game.getRecords();
+        let records = game.records;
+        let m = 0;
+        let g = 0;
+        let g_scores = [];
+        for(var i in records){
+            let record = records[i];
+            if(record.score_team == "ally"){
+                m += 1;
+            }
+            else if (record.score_team == "enemy"){
+                g += 1;
+            }
+            if((m >= 25 || g >= 25) && (m - g >= 2 || g - m >= 2)){
+                g_scores.push(g);
+                m = 0;
+                g = 0;
+            }
+        }
+        if(!game.confirm)
+            g_scores.push(g);
+        return res.send(g_scores);
+    }
+    else{
+        return res.status(400).send({status:'failed',msg:'game not owned'});
+    }
+})
+
 router.post('/game/:gid/m_player', async function(req, res) {
     let user = req.user;
     let gid = req.params.gid, pid = req.body.pid, number = req.body.number;
@@ -74,9 +156,9 @@ router.post('/game/:gid/g_player', async function(req, res) {
 });
 
 
-router.put('/game/:gid/g_point', async function(req, res) {
+router.post('/game/:gid/g_point', async function(req, res) {
     let gid = req.params.gid, new_point = req.body.point;
-    Game.update({_id: gid}, {g_point: new_point}, function(err, result){
+    Game.updateOne({_id: gid}, {g_point: new_point}, function(err, result){
         if(err){
             res.status(400).send({status:'failed',msg:err.message})
         }
@@ -86,9 +168,9 @@ router.put('/game/:gid/g_point', async function(req, res) {
     })
 });
 
-router.put('/game/:gid/m_point', async function(req, res) {
+router.post('/game/:gid/m_point', async function(req, res) {
     let gid = req.params.gid, new_point = req.body.point;
-    Game.update({_id: gid}, {m_point: new_point}, function(err, result){
+    Game.updateOne({_id: gid}, {m_point: new_point}, function(err, result){
         if(err){
             res.status(400).send({status:'failed',msg:err.message})
         }
@@ -104,11 +186,11 @@ router.post('/game/:gid/record', async function(req, res) {
         let game = await Game.findById(gid).exec();
         let record = await Record.create(req.body);
         game.records.push(record._id);
+        await game.getRecords();
         game.save(async function(err) {
             if(err) {
                 return res.status(400).send({status:'failed',msg:err.message}).end();
             }
-            await game.getRecords();
             return res.send(game);
         });
     }else{
