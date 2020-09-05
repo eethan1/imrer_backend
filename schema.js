@@ -33,6 +33,12 @@ var GameSchema = new Schema({
     }, // 比賽名 e.g. 台大資管v.s.台大資工
     guest: {type: String, required:true}, // 客場隊伍名
     master: {type: String, required:true}, // 主場隊伍名
+    mainStats: [
+        {
+            title: {type: String, required: true},
+            value: {type: Number, required: true}
+        }
+    ],
     g_players:[
         {
             number: {type:Number, default:-1}, // 背號
@@ -62,6 +68,39 @@ GameSchema.method('getRecords', async function(){
     await this.populate('records').execPopulate();
     return this.records;
 });
+
+GameSchema.method('getMainStats', async function(){
+    await this.getRecords();
+    if(this.mainStats.length){
+        this.mainStats = [];
+    }
+    var atkScores = this.records.filter(record => record.event == "ATK" && record.score_team == "ally").length;
+    var blockScores = this.records.filter(record => record.event == "BLOCK" && record.score_team == "ally").length;
+    var ace = this.records.filter(record => record.event == "SERVE" && record.score_team == "ally").length;
+    var enemyError = this.records.filter(record => record.maker == "548754875487548754875487" && record.score_team == "ally").length;
+    var receiveError = this.records.filter(record => record.event == "RCV" && record.score_team == "enemy").length;
+ 
+    this.mainStats.push({
+        title: "攻擊得分",
+        value: atkScores
+    });
+    this.mainStats.push({
+        title: "攔網得分",
+        value: blockScores
+    });
+    this.mainStats.push({
+        title: "Ace",
+        value: ace
+    });
+    this.mainStats.push({
+        title: "敵方失誤",
+        value: enemyError
+    });
+    this.mainStats.push({
+        title: "一傳失誤",
+        value: receiveError
+    });
+})
 
 GameSchema.method('withAll', async function(){
     await this.populate('g_players').populate('m_players').populate('records').execPopulate();

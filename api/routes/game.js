@@ -35,6 +35,8 @@ router.post('/game/:gid/confirm', async function(req, res){
         let game = await Game.findById(gid).exec();
         console.log(game);
         game.confirm = true
+        await game.getMainStats();
+        console.log(game);
         game.save(function(err) {
             if(err) {
                 return res.status(400).send({status:'failed',msg:err.message});       
