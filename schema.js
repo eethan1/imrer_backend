@@ -10,17 +10,11 @@ db.once('open', function() {
 });
 
 var RecordSchema = new Schema({
-    date:{type:Date, default:Date.now}, // 紀錄日期
     time:{type:Number, required:true, min:0}, // 在比賽中的第幾秒，單位 sec
-    quarter:{type:Number, default:1}, // 第幾個 1/4 場
-    event: {type:String, default:'score'}, // 事件，像是犯規、得分 
-    sub_type: {type:String, default:null}, // 次事件，描述事件，像是打手、得兩分
-    maker: {type: Schema.Types.ObjectId, ref: 'Player', required:true}, // 造成犯規/得分/助攻之類的人
-    relateds: [
-        {type: Schema.Types.ObjectId, ref: 'Player', required:false}
-    ], // 其他和這個 event 相關的人，得分的話相關的人就是助攻之類ㄉ
-    comment:{type:String, default:''}, // 使用者對這個 play 的評論
-    value:{type:Number, default:50}, // 使用者對這個 play 的評分，會從 A,B,C 轉成數值儲存
+    score_team:{type:String, default:'none'}, // 得分方 (ally, enemy, none)
+    event: {type:String, default:'score'}, // 事件 (ATK, BLOCK, SET, SERVE, RCV, NONE)
+    maker: {type:Schema.Types.ObjectId, ref: 'Player', required:true}, // 造成犯規/得分/助攻之類的人
+    quality:{type:Number, default:50}, // 使用者對這個 play 的評分，會從 A,B,C 轉成數值儲存
     x_loc:{type:Number, default:-1}, // 發生的座標， -1 代表場外(技術犯規、換人之類的)
     y_loc:{type:Number, default:-1},
 });
@@ -34,7 +28,7 @@ var GameSchema = new Schema({
     date:{type:Date, default:Date.now}, // 比賽日期
     championship:{type:String, default:null}, // 所屬聯賽、錦標賽名
     name:{type:String, default: function() { 
-            return `${this.master} v.s. ${this.guest}`;    
+            return `${this.master} v.s ${this.guest}`;    
         }
     }, // 比賽名 e.g. 台大資管v.s.台大資工
     guest: {type: String, required:true}, // 客場隊伍名
