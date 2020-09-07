@@ -113,6 +113,24 @@ router.get('/game/:gid/g_scores', async function(req, res){
     }
 })
 
+router.get('/game/:gid/records', async function(req, res){
+    let gid = req.params.gid;
+    let cond = req.query.cond;
+    console.log('COND is: ', cond);
+    if(req.user.team.games.includes(gid)){
+        let game = await Game.findById(gid).exec();
+        var records = await game.getRecordsOf(cond);
+        var count = records.length;
+        return res.send({
+            count: count,
+            records: records
+        });
+    }
+    else{
+        return res.status(400).send({status:'failed',msg:'game not owned'});
+    }    
+})
+
 router.post('/game/:gid/m_player', async function(req, res) {
     let user = req.user;
     let gid = req.params.gid, pid = req.body.pid, number = req.body.number;
