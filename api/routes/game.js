@@ -116,7 +116,6 @@ router.get('/game/:gid/g_scores', async function(req, res){
 router.get('/game/:gid/records', async function(req, res){
     let gid = req.params.gid;
     let cond = req.query.cond;
-    console.log('COND is: ', cond);
     if(req.user.team.games.includes(gid)){
         let game = await Game.findById(gid).exec();
         var records = await game.getRecordsOf(cond);
