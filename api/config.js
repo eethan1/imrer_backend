@@ -7,6 +7,8 @@ module.exports = {
             name:'game'
         },{
             name:'record'
-        },
+        },{
+            name:'player'
+        }
     ]
 }

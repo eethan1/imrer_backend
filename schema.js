@@ -102,12 +102,109 @@ GameSchema.method('getMainStats', async function(){
     });
 })
 
-GameSchema.method('getRecordsOf', async function(cond){
-    await this.getRecords();
+GameSchema.method('getRecordsOf', async function(cond=''){
+    let records = await this.getRecords();
+    return queryRecords(records, cond);
+})
 
-    var records = this.records.filter(record => record.maker != "548754875487548754875487");
+GameSchema.method('withAll', async function(){
+    await this.populate('g_players').populate('m_players').populate('records').execPopulate();
+    return this;
+});
 
+GameSchema.method('findById', async function(_id){
+    return this.find(e => e._id === _id);
+});
+
+var PlayerSchema = new Schema({
+    creater: {type: Schema.Types.ObjectId, ref: 'User'},
+    name: {type: String, required: true}, // 背號
+    grade: {type: String, required: true}, // 年級
+    birth: {type: Date, default: Date.now}, // 生日
+    number: {type: Number, required: true}, // 背號
+    position: {type: String, required: true}, // 打的位置
+    records:[
+        {type: Schema.Types.ObjectId, ref: 'Record', required:false}
+    ],
+});
+
+PlayerSchema.method('findById', async function(_id){
+    return this.find(e => e._id === _id);
+});
+
+PlayerSchema.method('getRecords', async function(cond=''){
+    await this.populate('records').execPopulate();
+    return queryRecords(this.records, cond);
+})
+
+var TeamSchema =  new Schema({
+    name:   String, // 隊名
+    win:    {type:Number, default:0}, // 勝場
+    lose:   {type:Number, default:0}, // 敗場
+    tie:   {type:Number, default:0}, // 平手場
+    sport_type: String, // 運動類型
+    description: {type:String, default:''}, // 隊伍自介
+    players: [{type: Schema.Types.ObjectId, ref: 'Player'}], // 擁有的球員們
+    games: [{type: Schema.Types.ObjectId, ref: 'Game'}], // 擁有的比賽們
+    e_score: {type:Number, default:50}, // 隊伍綜合戰力之類的東東
+    createdDate: {type:Date, default: Date.now}, // 使用者創立隊伍的日期
+});
+
+TeamSchema.method('getGames', async function() {
+    await this.populate('games').execPopulate();
+    return this.games;
+});
+
+TeamSchema.method('getPlayers', async function() {
+    await this.populate('players').execPopulate();
+    return this.players;
+});
+
+TeamSchema.method('withAll', async function() {
+    await this.getGames();
+    await this.getPlayers();
+    return this;
+});
+
+
+var UserSchema = new Schema({
+    account:{type:String,unqiue:true, required:true}, // 帳號
+    password:{type:String,required:true}, // 密碼
+    team: {type: Schema.Types.ObjectId, ref: 'Team'}, // 擁有的隊伍
+    session:{type: String, maxlength:32, minlength:32, default:(()=>{return randomstring.generate(32)})} // 登入後使用的憑證
+});
+
+UserSchema.method('getGames', async function() {
+    await this.team.getGames();
+    return this.team.games;
+});
+
+
+module.exports = {
+    schemas:{
+        UserSchema:UserSchema,
+        TeamSchema:TeamSchema,
+        PlayerSchema:PlayerSchema,
+        GameSchema:GameSchema,
+        RecordSchema:RecordSchema
+    },
+    db:db
+}
+
+function max(a, b){
+    return a > b ? a : b;
+}
+
+function min(a, b){
+    return a < b ? a : b;
+}
+
+function queryRecords(raw_records, cond){
+    let records = raw_records.filter(record => record.maker != "548754875487548754875487");
     switch(cond){
+        case '':
+            return records;
+
         case 'atk':
             return records.filter(record => record.event == 'ATK');
 
@@ -201,10 +298,10 @@ GameSchema.method('getRecordsOf', async function(cond){
             return records.filter(record => record.event == 'BLOCK' && record.quality == 50);
 
         case 'normal_block_perfect_atk':
-            return this.records.filter((record, i) => record.event == 'BLOCK' && record.quality == 50 && this.records[max(0, i-1)].maker == "548754875487548754875487" && this.records[max(0, i-1)].event == "ATK" && this.records[max(0, i-1)].quality == 100);
+            return raw_records.filter((record, i) => record.event == 'BLOCK' && record.quality == 50 && raw_records[max(0, i-1)].maker == "548754875487548754875487" && raw_records[max(0, i-1)].event == "ATK" && raw_records[max(0, i-1)].quality == 100);
 
         case 'normal_block_special_atk':
-            return this.records.filter((record, i) => record.event == 'BLOCK' && record.quality == 50 && this.records[max(0, i-1)].maker == "548754875487548754875487" && this.records[max(0, i-1)].event == "ATK" && this.records[max(0, i-1)].quality == 25);
+            return raw_records.filter((record, i) => record.event == 'BLOCK' && record.quality == 50 && raw_records[max(0, i-1)].maker == "548754875487548754875487" && raw_records[max(0, i-1)].event == "ATK" && raw_records[max(0, i-1)].quality == 25);
 
         case 'bad_block':
             return records.filter(record => record.event == 'BLOCK' && record.quality == 0);
@@ -219,7 +316,7 @@ GameSchema.method('getRecordsOf', async function(cond){
             return records.filter(record => record.event == 'SERVE' && record.quality == 100 && record.score_team == 'ally');
 
         case 'perfect_serve_enemy_error':
-            return this.records.filter((record, i) => record.event == 'SERVE' && record.quality == 100 && this.records[min(this.records.length-1, i+1)].score_team == 'ally');
+            return raw_records.filter((record, i) => record.event == 'SERVE' && record.quality == 100 && raw_records[min(raw_records.length-1, i+1)].score_team == 'ally');
 
         case 'normal_serve':
             return records.filter(record => record.event == 'SERVE' && record.quality == 50);
@@ -228,7 +325,7 @@ GameSchema.method('getRecordsOf', async function(cond){
             return records.filter(record => record.event == 'SERVE' && record.quality == 50 && record.score_team == 'ally');
 
         case 'normal_serve_enemy_error':
-            return this.records.filter((record, i) => record.event == 'SERVE' && record.quality == 50 && this.records[min(this.records.length-1, i+1)].score_team == 'ally');
+            return raw_records.filter((record, i) => record.event == 'SERVE' && record.quality == 50 && raw_records[min(raw_records.length-1, i+1)].score_team == 'ally');
 
         case 'bad_serve':
             return records.filter(record => record.event == 'SERVE' && record.quality == 0);
@@ -246,110 +343,57 @@ GameSchema.method('getRecordsOf', async function(cond){
             return records.filter(record => record.event == "RCV" && record.quality == 100);
 
         case 'perfect_receive_normal_set':
-            return records.filter((record, i) => record.event == "RCV" && record.quality == 100 && records[min(this.records.length-1, i+1)].event == "SET" && records[min(this.records.length-1, i+1)].quality == 50);
+            return records.filter((record, i) => record.event == "RCV" && record.quality == 100 && records[min(raw_records.length-1, i+1)].event == "SET" && records[min(raw_records.length-1, i+1)].quality == 50);
         
         case 'perfect_receive_bad_set':
-            return records.filter((record, i) => record.event == "RCV" && record.quality == 100 && records[min(this.records.length-1, i+1)].event == "SET" && records[min(this.records.length-1, i+1)].quality == 0);
+            return records.filter((record, i) => record.event == "RCV" && record.quality == 100 && records[min(raw_records.length-1, i+1)].event == "SET" && records[min(raw_records.length-1, i+1)].quality == 0);
         
         case 'normal_receive':
             return records.filter(record => record.event == "RCV" && record.quality == 50);
 
         case 'normal_receive_normal_set':
-            return records.filter((record, i) => record.event == "RCV" && record.quality == 50 && records[min(this.records.length-1, i+1)].event == "SET" && records[min(this.records.length-1, i+1)].quality == 50);
+            return records.filter((record, i) => record.event == "RCV" && record.quality == 50 && records[min(raw_records.length-1, i+1)].event == "SET" && records[min(raw_records.length-1, i+1)].quality == 50);
         
         case 'normal_receive_bad_set':
-            return records.filter((record, i) => record.event == "RCV" && record.quality == 50 && records[min(this.records.length-1, i+1)].event == "SET" && records[min(this.records.length-1, i+1)].quality == 0);
+            return records.filter((record, i) => record.event == "RCV" && record.quality == 50 && records[min(raw_records.length-1, i+1)].event == "SET" && records[min(raw_records.length-1, i+1)].quality == 0);
 
         case 'bad_receive':
             return records.filter(record => record.event == "RCV" && record.quality == 100);
 
         case 'bad_receive_cover':
-            return records.filter((record, i) => record.event == "RCV" && record.quality == 100 && records[min(this.records.length-1, i+1)].event == "SET" && records[min(this.records.length-1, i+1)].quality == 50);
+            return records.filter((record, i) => record.event == "RCV" && record.quality == 100 && records[min(raw_records.length-1, i+1)].event == "SET" && records[min(raw_records.length-1, i+1)].quality == 50);
         
         case 'bad_receive_lose':
             return records.filter((record, i) => record.event == "RCV" && record.quality == 100 && record.score_team == 'enemy');
 
+        case 'set':
+            return records.filter(record => record.event == "SET");
+
+        case 'normal_set':
+            return records.filter(record => record.event == "SET" && record.quality == 50);
+
+        case 'bad_set':
+            return records.filter(record => record.event == "SET" && record.quality == 0);
+
+        case 'normal_set_perfect_atk':
+            return records.filter((record, i) => record.event == "SET" && record.quality == 50 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 100);
+        
+        case 'normal_set_normal_atk':
+            return records.filter((record, i) => record.event == "SET" && record.quality == 50 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 50);
+
+        case 'normal_set_bad_atk':
+            return records.filter((record, i) => record.event == "SET" && record.quality == 50 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 0);
+
+        case 'bad_set_perfect_atk':
+            return records.filter((record, i) => record.event == "SET" && record.quality == 0 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 100);
+        
+        case 'bad_set_normal_atk':
+            return records.filter((record, i) => record.event == "SET" && record.quality == 0 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 50);
+
+        case 'bad_set_bad_atk':
+            return records.filter((record, i) => record.event == "SET" && record.quality == 0 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 0);
+
         default:
             return records;
     }
-})
-
-GameSchema.method('withAll', async function(){
-    await this.populate('g_players').populate('m_players').populate('records').execPopulate();
-    return this;
-});
-
-GameSchema.method('findById', async function(_id){
-    return this.find(e => e._id === _id);
-});
-
-var PlayerSchema = new Schema({
-    creater: {type: Schema.Types.ObjectId, ref: 'User'},
-    name: {type: String, required: true}, // 背號
-    grade: {type: String, required: true}, // 年級
-    birth: {type: Date, default: Date.now}, // 生日
-    number: {type: Number, required: true}, // 背號
-    position: {type: String, required: true} // 打的位置
-});
-
-var TeamSchema =  new Schema({
-    name:   String, // 隊名
-    win:    {type:Number, default:0}, // 勝場
-    lose:   {type:Number, default:0}, // 敗場
-    tie:   {type:Number, default:0}, // 平手場
-    sport_type: String, // 運動類型
-    description: {type:String, default:''}, // 隊伍自介
-    players: [{type: Schema.Types.ObjectId, ref: 'Player'}], // 擁有的球員們
-    games: [{type: Schema.Types.ObjectId, ref: 'Game'}], // 擁有的比賽們
-    e_score: {type:Number, default:50}, // 隊伍綜合戰力之類的東東
-    createdDate: {type:Date, default: Date.now}, // 使用者創立隊伍的日期
-});
-
-TeamSchema.method('getGames', async function() {
-    await this.populate('games').execPopulate();
-    return this.games;
-});
-
-TeamSchema.method('getPlayers', async function() {
-    await this.populate('players').execPopulate();
-    return this.players;
-});
-
-TeamSchema.method('withAll', async function() {
-    await this.getGames();
-    await this.getPlayers();
-    return this;
-});
-
-
-var UserSchema = new Schema({
-    account:{type:String,unqiue:true, required:true}, // 帳號
-    password:{type:String,required:true}, // 密碼
-    team: {type: Schema.Types.ObjectId, ref: 'Team'}, // 擁有的隊伍
-    session:{type: String, maxlength:32, minlength:32, default:(()=>{return randomstring.generate(32)})} // 登入後使用的憑證
-});
-
-UserSchema.method('getGames', async function() {
-    await this.team.getGames();
-    return this.team.games;
-});
-
-
-module.exports = {
-    schemas:{
-        UserSchema:UserSchema,
-        TeamSchema:TeamSchema,
-        PlayerSchema:PlayerSchema,
-        GameSchema:GameSchema,
-        RecordSchema:RecordSchema
-    },
-    db:db
-}
-
-function max(a, b){
-    return a > b ? a : b;
-}
-
-function min(a, b){
-    return a < b ? a : b;
 }
