@@ -145,6 +145,17 @@ router.get('/game/:gid/records', async function(req, res){
     }    
 })
 
+router.get('/game/:gid/m_player', async function(req, res){
+    let gid = req.params.gid;
+    if(req.user.team.games.includes(gid)){
+        let game = await Game.findById(gid).exec();
+        return res.send(game.m_players);
+    }
+    else{
+        return res.status(400).send({status:'failed',msg:'game not owned'});
+    }    
+})
+
 router.post('/game/:gid/m_player', async function(req, res) {
     let user = req.user;
     let gid = req.params.gid, pid = req.body.pid, number = req.body.number;
@@ -154,7 +165,9 @@ router.post('/game/:gid/m_player', async function(req, res) {
     }
     if(req.user.team.games.includes(gid)){
         let game = await Game.findById(gid).exec();
-        console.log(game);
+        if(game.m_players.filter(p => p.player == pid).length != 0){
+            return res.send(game);
+        }
         game.m_players.push(player);
         game.save(function(err) {
             if(err) {
