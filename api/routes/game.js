@@ -33,8 +33,23 @@ router.post('/game/:gid/confirm', async function(req, res){
     let gid = req.params.gid
     if(req.user.team.games.includes(gid)){
         let game = await Game.findById(gid).exec();
+        let team = req.user.team;
         console.log(game);
-        game.confirm = true
+        game.confirm = true;
+        if(game.m_point > game.g_point){
+            team.win = team.win + 1;
+        }
+        else if(game.m_point < game.g_point){
+            team.lose = team.lose + 1;
+        }
+        else{
+            team.tie = team.tie + 1;
+        }
+        team.save(function(err){
+            if(err) {
+                return res.status(400).send({status:'failed',msg:err.message});       
+            }
+        })
         await game.getMainStats();
         console.log(game);
         game.save(function(err) {
