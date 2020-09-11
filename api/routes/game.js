@@ -234,18 +234,20 @@ router.post('/game/:gid/record', async function(req, res) {
         let record = await Record.create(req.body);
         let pid = record.maker;
         let player = await Player.findById(pid).exec();
-        player.records.push(record._id);
+        if(player)
+            player.records.push(record._id);
         game.records.push(record._id);
         game.save(async function(err) {
             if(err) {
                 return res.status(400).send({status:'failed',msg:err.message}).end();
             }
             else{
-                player.save(async function(err) {
-                    if(err){
-                        return res.status(400).send({status:'failed',msg:err.message}).end();
-                    }
-                })
+                if(player)
+                    player.save(async function(err) {
+                        if(err){
+                            return res.status(400).send({status:'failed',msg:err.message}).end();
+                        }
+                    })
             }
             return res.send(game);
         });
