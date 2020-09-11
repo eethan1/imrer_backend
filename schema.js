@@ -14,7 +14,7 @@ var RecordSchema = new Schema({
     score_team:{type:String, default:'none'}, // 得分方 (ally, enemy, none)
     event: {type:String, default:'score'}, // 事件 (ATK, BLOCK, SET, SERVE, RCV, NONE)
     maker: {type:Schema.Types.ObjectId, ref: 'Player', required:false}, // 造成犯規/得分/助攻之類的人
-    quality:{type:Number, default:50}, // 使用者對這個 play 的評分，會從 A,B,C 轉成數值儲存
+    quality:{type:Number, default:75}, // 使用者對這個 play 的評分，會從 A,B,C 轉成數值儲存
     x_loc:{type:Number, default:-1}, // 發生的座標， -1 代表場外(技術犯規、換人之類的)
     y_loc:{type:Number, default:-1},
 });
@@ -124,7 +124,7 @@ var PlayerSchema = new Schema({
     number: {type: Number, required: true}, // 背號
     position: {type: String, required: true}, // 打的位置
     records:[
-        {type: Schema.Types.ObjectId, ref: 'Record', required:false}
+        {type: Schema.Types.ObjectId, ref: 'Record', required:true}
     ],
 });
 
@@ -146,7 +146,7 @@ var TeamSchema =  new Schema({
     description: {type:String, default:''}, // 隊伍自介
     players: [{type: Schema.Types.ObjectId, ref: 'Player'}], // 擁有的球員們
     games: [{type: Schema.Types.ObjectId, ref: 'Game'}], // 擁有的比賽們
-    e_score: {type:Number, default:50}, // 隊伍綜合戰力之類的東東
+    e_score: {type:Number, default:75}, // 隊伍綜合戰力之類的東東
     createdDate: {type:Date, default: Date.now}, // 使用者創立隊伍的日期
 });
 
@@ -221,64 +221,64 @@ function queryRecords(raw_records, cond){
             return records.filter(record => record.event == 'ATK' && record.quality == 100 && record.score_team == 'enemy');
     
         case 'perfect_atk_normal_set':
-            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 100 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 50);
+            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 100 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 75);
 
         case 'perfect_atk_bad_set':
-            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 100 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 0);
+            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 100 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 25);
 
         case 'normal_atk':
-            return records.filter(record => record.event == 'ATK' && record.quality == 50);
+            return records.filter(record => record.event == 'ATK' && record.quality == 75);
 
         case 'normal_atk_score':
-            return records.filter(record => record.event == 'ATK' && record.quality == 50 && record.score_team == 'ally');
+            return records.filter(record => record.event == 'ATK' && record.quality == 75 && record.score_team == 'ally');
 
         case 'normal_atk_none':
-            return records.filter(record => record.event == 'ATK' && record.quality == 50 && record.score_team == 'none');
+            return records.filter(record => record.event == 'ATK' && record.quality == 75 && record.score_team == 'none');
         
         case 'normal_atk_lose':
-            return records.filter(record => record.event == 'ATK' && record.quality == 50 && record.score_team == 'enemy');
+            return records.filter(record => record.event == 'ATK' && record.quality == 75 && record.score_team == 'enemy');
 
         case 'normal_atk_normal_set':
-            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 50 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 50);
+            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 75 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 75);
 
         case 'normal_atk_bad_set':
-            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 50 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 0);
+            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 75 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 25);
 
         case 'bad_atk':
-            return records.filter(record => record.event == 'ATK' && record.quality == 0);
-
-        case 'bad_atk_score':
-            return records.filter(record => record.event == 'ATK' && record.quality == 0 && record.score_team == 'ally');
-
-        case 'bad_atk_none':
-            return records.filter(record => record.event == 'ATK' && record.quality == 0 && record.score_team == 'none');
-        
-        case 'bad_atk_lose':
-            return records.filter(record => record.event == 'ATK' && record.quality == 0 && record.score_team == 'enemy');
-        
-        case 'bad_atk_normal_set':
-            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 0 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 50);
-
-        case 'bad_atk_bad_set':
-            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 0 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 0);
-        
-        case 'special_atk':
             return records.filter(record => record.event == 'ATK' && record.quality == 25);
 
-        case 'special_atk_score':
+        case 'bad_atk_score':
             return records.filter(record => record.event == 'ATK' && record.quality == 25 && record.score_team == 'ally');
 
-        case 'special_atk_none':
+        case 'bad_atk_none':
             return records.filter(record => record.event == 'ATK' && record.quality == 25 && record.score_team == 'none');
         
-        case 'special_atk_lose':
+        case 'bad_atk_lose':
             return records.filter(record => record.event == 'ATK' && record.quality == 25 && record.score_team == 'enemy');
         
+        case 'bad_atk_normal_set':
+            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 25 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 75);
+
+        case 'bad_atk_bad_set':
+            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 25 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 25);
+        
+        case 'special_atk':
+            return records.filter(record => record.event == 'ATK' && record.quality == 50);
+
+        case 'special_atk_score':
+            return records.filter(record => record.event == 'ATK' && record.quality == 50 && record.score_team == 'ally');
+
+        case 'special_atk_none':
+            return records.filter(record => record.event == 'ATK' && record.quality == 50 && record.score_team == 'none');
+        
+        case 'special_atk_lose':
+            return records.filter(record => record.event == 'ATK' && record.quality == 50 && record.score_team == 'enemy');
+        
         case 'special_atk_normal_set':
-            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 25 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 50);
+            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 50 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 75);
 
         case 'special_atk_bad_set':
-            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 25 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 0);
+            return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 50 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 25);
             
         case 'block':
             console.log('records are:', records.filter(record => record.event == 'BLOCK'));
@@ -295,16 +295,16 @@ function queryRecords(raw_records, cond){
             return records.filter(record => record.event == 'BLOCK' && record.quality == 100 && record.score_team == 'enemy');
 
         case 'normal_block':
-            return records.filter(record => record.event == 'BLOCK' && record.quality == 50);
+            return records.filter(record => record.event == 'BLOCK' && record.quality == 75);
 
         case 'normal_block_perfect_atk':
-            return raw_records.filter((record, i) => record.event == 'BLOCK' && record.quality == 50 && raw_records[max(0, i-1)].maker == "548754875487548754875487" && raw_records[max(0, i-1)].event == "ATK" && raw_records[max(0, i-1)].quality == 100);
+            return raw_records.filter((record, i) => record.event == 'BLOCK' && record.quality == 75 && raw_records[max(0, i-1)].maker == "548754875487548754875487" && raw_records[max(0, i-1)].event == "ATK" && raw_records[max(0, i-1)].quality == 100);
 
         case 'normal_block_special_atk':
-            return raw_records.filter((record, i) => record.event == 'BLOCK' && record.quality == 50 && raw_records[max(0, i-1)].maker == "548754875487548754875487" && raw_records[max(0, i-1)].event == "ATK" && raw_records[max(0, i-1)].quality == 25);
+            return raw_records.filter((record, i) => record.event == 'BLOCK' && record.quality == 75 && raw_records[max(0, i-1)].maker == "548754875487548754875487" && raw_records[max(0, i-1)].event == "ATK" && raw_records[max(0, i-1)].quality == 50);
 
         case 'bad_block':
-            return records.filter(record => record.event == 'BLOCK' && record.quality == 0);
+            return records.filter(record => record.event == 'BLOCK' && record.quality == 25);
     
         case 'serve':
             return records.filter(record => record.event == 'SERVE');
@@ -319,22 +319,22 @@ function queryRecords(raw_records, cond){
             return raw_records.filter((record, i) => record.event == 'SERVE' && record.quality == 100 && raw_records[min(raw_records.length-1, i+1)].score_team == 'ally');
 
         case 'normal_serve':
-            return records.filter(record => record.event == 'SERVE' && record.quality == 50);
+            return records.filter(record => record.event == 'SERVE' && record.quality == 75);
 
         case 'normal_serve_score':
-            return records.filter(record => record.event == 'SERVE' && record.quality == 50 && record.score_team == 'ally');
+            return records.filter(record => record.event == 'SERVE' && record.quality == 75 && record.score_team == 'ally');
 
         case 'normal_serve_enemy_error':
-            return raw_records.filter((record, i) => record.event == 'SERVE' && record.quality == 50 && raw_records[min(raw_records.length-1, i+1)].score_team == 'ally');
+            return raw_records.filter((record, i) => record.event == 'SERVE' && record.quality == 75 && raw_records[min(raw_records.length-1, i+1)].score_team == 'ally');
 
         case 'bad_serve':
-            return records.filter(record => record.event == 'SERVE' && record.quality == 0);
+            return records.filter(record => record.event == 'SERVE' && record.quality == 25);
 
         case 'bad_serve_net': // Not finished
-            return records.filter(record => record.event == 'SERVE' && record.quality == 0);
+            return records.filter(record => record.event == 'SERVE' && record.quality == 25);
 
         case 'bad_serve_outside': // Not finished
-            return records.filter(record => record.event == 'SERVE' && record.quality == 0);
+            return records.filter(record => record.event == 'SERVE' && record.quality == 25);
 
         case 'receive':
             return records.filter(record => record.event == 'RCV');
@@ -343,55 +343,55 @@ function queryRecords(raw_records, cond){
             return records.filter(record => record.event == "RCV" && record.quality == 100);
 
         case 'perfect_receive_normal_set':
-            return records.filter((record, i) => record.event == "RCV" && record.quality == 100 && records[min(raw_records.length-1, i+1)].event == "SET" && records[min(raw_records.length-1, i+1)].quality == 50);
+            return records.filter((record, i) => record.event == "RCV" && record.quality == 100 && records[min(raw_records.length-1, i+1)].event == "SET" && records[min(raw_records.length-1, i+1)].quality == 75);
         
         case 'perfect_receive_bad_set':
-            return records.filter((record, i) => record.event == "RCV" && record.quality == 100 && records[min(raw_records.length-1, i+1)].event == "SET" && records[min(raw_records.length-1, i+1)].quality == 0);
+            return records.filter((record, i) => record.event == "RCV" && record.quality == 100 && records[min(raw_records.length-1, i+1)].event == "SET" && records[min(raw_records.length-1, i+1)].quality == 25);
         
         case 'normal_receive':
-            return records.filter(record => record.event == "RCV" && record.quality == 50);
+            return records.filter(record => record.event == "RCV" && record.quality == 75);
 
         case 'normal_receive_normal_set':
-            return records.filter((record, i) => record.event == "RCV" && record.quality == 50 && records[min(raw_records.length-1, i+1)].event == "SET" && records[min(raw_records.length-1, i+1)].quality == 50);
+            return records.filter((record, i) => record.event == "RCV" && record.quality == 75 && records[min(raw_records.length-1, i+1)].event == "SET" && records[min(raw_records.length-1, i+1)].quality == 75);
         
         case 'normal_receive_bad_set':
-            return records.filter((record, i) => record.event == "RCV" && record.quality == 50 && records[min(raw_records.length-1, i+1)].event == "SET" && records[min(raw_records.length-1, i+1)].quality == 0);
+            return records.filter((record, i) => record.event == "RCV" && record.quality == 75 && records[min(raw_records.length-1, i+1)].event == "SET" && records[min(raw_records.length-1, i+1)].quality == 25);
 
         case 'bad_receive':
-            return records.filter(record => record.event == "RCV" && record.quality == 100);
+            return records.filter(record => record.event == "RCV" && record.quality == 25);
 
         case 'bad_receive_cover':
-            return records.filter((record, i) => record.event == "RCV" && record.quality == 100 && records[min(raw_records.length-1, i+1)].event == "SET" && records[min(raw_records.length-1, i+1)].quality == 50);
+            return records.filter((record, i) => record.event == "RCV" && record.quality == 25 && records[min(raw_records.length-1, i+1)].event == "SET" && records[min(raw_records.length-1, i+1)].quality == 75);
         
         case 'bad_receive_lose':
-            return records.filter((record, i) => record.event == "RCV" && record.quality == 100 && record.score_team == 'enemy');
+            return records.filter((record, i) => record.event == "RCV" && record.quality == 25 && record.score_team == 'enemy');
 
         case 'set':
             return records.filter(record => record.event == "SET");
 
         case 'normal_set':
-            return records.filter(record => record.event == "SET" && record.quality == 50);
+            return records.filter(record => record.event == "SET" && record.quality == 75);
 
         case 'bad_set':
-            return records.filter(record => record.event == "SET" && record.quality == 0);
+            return records.filter(record => record.event == "SET" && record.quality == 25);
 
         case 'normal_set_perfect_atk':
-            return records.filter((record, i) => record.event == "SET" && record.quality == 50 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 100);
+            return records.filter((record, i) => record.event == "SET" && record.quality == 75 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 100);
         
         case 'normal_set_normal_atk':
-            return records.filter((record, i) => record.event == "SET" && record.quality == 50 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 50);
+            return records.filter((record, i) => record.event == "SET" && record.quality == 75 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 75);
 
         case 'normal_set_bad_atk':
-            return records.filter((record, i) => record.event == "SET" && record.quality == 50 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 0);
+            return records.filter((record, i) => record.event == "SET" && record.quality == 75 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 25);
 
         case 'bad_set_perfect_atk':
-            return records.filter((record, i) => record.event == "SET" && record.quality == 0 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 100);
+            return records.filter((record, i) => record.event == "SET" && record.quality == 25 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 100);
         
         case 'bad_set_normal_atk':
-            return records.filter((record, i) => record.event == "SET" && record.quality == 0 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 50);
+            return records.filter((record, i) => record.event == "SET" && record.quality == 25 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 75);
 
         case 'bad_set_bad_atk':
-            return records.filter((record, i) => record.event == "SET" && record.quality == 0 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 0);
+            return records.filter((record, i) => record.event == "SET" && record.quality == 25 && records[min(records.length, i+1)].event == "ATK" && records[min(records.length, i+1)].quality == 25);
 
         default:
             return records;
