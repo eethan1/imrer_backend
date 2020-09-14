@@ -1,6 +1,6 @@
 var mongoose = require('mongoose');
 var randomstring = require('randomstring');
-mongoose.connect('mongodb://localhost/ntuim', {useNewUrlParser: true});
+mongoose.connect('mongodb://localhost:27017/imrer', {useNewUrlParser: true});
 var db = mongoose.connection;
 var Schema = mongoose.Schema;
 db.on('error', console.error.bind(console, 'connection error:'));
@@ -104,7 +104,7 @@ GameSchema.method('getMainStats', async function(){
 
 GameSchema.method('getRecordsOf', async function(cond=''){
     let records = await this.getRecords();
-    return queryRecords(records, cond);
+    return queryRecords(records, cond, this.g_players[0].player);
 })
 
 GameSchema.method('withAll', async function(){
@@ -136,6 +136,23 @@ PlayerSchema.method('getRecords', async function(cond=''){
     await this.populate('records').execPopulate();
     return queryRecords(this.records, cond);
 })
+
+PlayerSchema.statics.createEnemy = function(user){
+    let enemy = {
+        creater: user._id,
+        name: "小維熊尼",
+        grade: "0",
+        birth: "1989-06-04",
+        number: "0",
+        position: "any",
+    };
+    let player = new this(enemy);
+    console.log('enemy:', player);
+    player.save(function(err) {
+        console.log(err);
+    });
+    return player;
+};
 
 var TeamSchema =  new Schema({
     name:   String, // 隊名
@@ -199,8 +216,8 @@ function min(a, b){
     return a < b ? a : b;
 }
 
-function queryRecords(raw_records, cond){
-    let records = raw_records.filter(record => record.maker != "548754875487548754875487");
+function queryRecords(raw_records, cond, enemyId=''){
+    let records = raw_records.filter(record => record.maker != enemyId.toString());
     switch(cond){
         case '':
             return records;
@@ -281,11 +298,9 @@ function queryRecords(raw_records, cond){
             return records.filter((record, i, r) => record.event == 'ATK' && record.quality == 50 && r[max(0, i-1)].event == 'SET' && r[max(0, i-1)].quality == 25);
             
         case 'block':
-            console.log('records are:', records.filter(record => record.event == 'BLOCK'));
             return records.filter(record => record.event == 'BLOCK');
         
         case 'perfect_block':
-            console.log('records are:', records.filter(record => record.event == 'BLOCK' && record.quality == 100))
             return records.filter(record => record.event == 'BLOCK' && record.quality == 100);
 
         case 'perfect_block_score':

@@ -44,6 +44,11 @@ router.post('/team/self/player', async function(req, res) {
 router.post('/team/self/game',async function(req, res) {
         if(req.user.team) {
             let team = req.user.team;
+            let enemy = await Player.createEnemy(req.user);
+            req.body.g_players = [{
+                number: 0,
+                player: enemy._id
+            }]
             let game = new Game(req.body);
             console.log('converted',team);
             game.save(function(err) {
