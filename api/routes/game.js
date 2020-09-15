@@ -281,5 +281,31 @@ router.post('/game/:gid/records', async function(req, res) {
     }
 });
 
+router.post('/game/:gid/record/undo', async function(req, res){
+    let gid = req.params.gid;
+    if(req.user.team.games.includes(gid)){
+        let game = await Game.findById(gid).exec();
+        let removal = game.records.pop();
+        Record.findOne({_id: removal}, async function(err, doc){
+            if(err){
+                return res.status(400).send({status:'failed',msg:err.message}).end();
+            }
+            if(!doc){
+                return res.status(400).send({status:'failed',msg:'The record doesn\'t exist'}).end();
+            }
+            removal = doc;
+            doc.remove();
+            return res.send(removal);      
+        });
+        game.save(async function(err) {
+            if(err) {
+                return res.status(400).send({status:'failed',msg:err.message}).end();
+            }
+        });  
+    }
+    else{
+        return res.status(400).send({status:'failed',msg:'game not owned'});
+    }
+})
 
 module.exports = router;
