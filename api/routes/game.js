@@ -18,14 +18,33 @@ router.route('/games')
 
 router.use('/game',global.middlewares.requiredLoggined);
 router.delete('/game/:gid', async function(req, res){
-    Game.deleteOne({_id: req.params.gid}, function(err, result){
-        if (err) {
-            res.send(err);
+    let gid = req.params.gid;
+    if(req.user.team.games.includes(gid)){
+        let team = req.user.team;
+        let game = await Game.findById(gid).exec();
+        if(game.m_point > game.g_point){
+            team.win = team.win - 1;
         }
-        else {
-            res.send(result);
+        else if(game.m_point < game.g_point){
+            team.lose = team.lose - 1;
         }
-    })
+        else{
+            team.tie = team.tie - 1;
+        }
+        Game.deleteOne({_id: req.params.gid}, function(err, result){
+            if (err) {
+                return res.send(err);
+            }
+        })
+        team.save(function(err){
+            if(err) {
+                return res.status(400).send({status:'failed',msg:err.message});       
+            }
+            else{
+                return res.send(team);
+            }
+        })
+    }
     
 })
 
