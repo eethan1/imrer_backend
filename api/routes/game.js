@@ -18,15 +18,161 @@ router.route('/games')
 
 router.use('/game',global.middlewares.requiredLoggined);
 router.delete('/game/:gid', async function(req, res){
-    Game.deleteOne({_id: req.params.gid}, function(err, result){
-        if (err) {
-            res.send(err);
+    let gid = req.params.gid;
+    if(req.user.team.games.includes(gid)){
+        let team = req.user.team;
+        let game = await Game.findById(gid).exec();
+        if(game.m_point > game.g_point){
+            team.win = team.win - 1;
         }
-        else {
-            res.send(result);
+        else if(game.m_point < game.g_point){
+            team.lose = team.lose - 1;
         }
-    })
+        else{
+            team.tie = team.tie - 1;
+        }
+        Game.deleteOne({_id: req.params.gid}, function(err, result){
+            if (err) {
+                return res.send(err);
+            }
+        })
+        team.save(function(err){
+            if(err) {
+                return res.status(400).send({status:'failed',msg:err.message});       
+            }
+            else{
+                return res.send(team);
+            }
+        })
+    }
     
+})
+
+router.post('/game/:gid/confirm', async function(req, res){
+    let gid = req.params.gid
+    if(req.user.team.games.includes(gid)){
+        let game = await Game.findById(gid).exec();
+        let team = req.user.team;
+        console.log(game);
+        game.confirm = true;
+        if(game.m_point > game.g_point){
+            team.win = team.win + 1;
+        }
+        else if(game.m_point < game.g_point){
+            team.lose = team.lose + 1;
+        }
+        else{
+            team.tie = team.tie + 1;
+        }
+        team.save(function(err){
+            if(err) {
+                return res.status(400).send({status:'failed',msg:err.message});       
+            }
+        })
+        await game.getMainStats();
+        console.log(game);
+        game.save(function(err) {
+            if(err) {
+                return res.status(400).send({status:'failed',msg:err.message});       
+            }
+            return res.send(game);
+        });
+    }
+    else{
+        return res.status(400).send({status:'failed',msg:'game not owned'});
+    }
+})
+
+router.get('/game/:gid/m_scores', async function(req, res){
+    let gid = req.params.gid;
+    if(req.user.team.games.includes(gid)){
+        let game = await Game.findById(gid).exec();
+        await game.getRecords();
+        let records = game.records;
+        let m = 0;
+        let g = 0;
+        let m_scores = [];
+        for(var i in records){
+            let record = records[i];
+            if(record.score_team == "ally"){
+                m += 1;
+            }
+            else if (record.score_team == "enemy"){
+                g += 1;
+            }
+            if((m >= 25 || g >= 25) && (m - g >= 2 || g - m >= 2)){
+                m_scores.push(m);
+                m = 0;
+                g = 0;
+            }
+        }
+        if(!game.confirm)
+            m_scores.push(m);
+        return res.send(m_scores);
+    }
+    else{
+        return res.status(400).send({status:'failed',msg:'game not owned'});
+    }
+})
+
+router.get('/game/:gid/g_scores', async function(req, res){
+    let gid = req.params.gid;
+    if(req.user.team.games.includes(gid)){
+        let game = await Game.findById(gid).exec();
+        await game.getRecords();
+        let records = game.records;
+        let m = 0;
+        let g = 0;
+        let g_scores = [];
+        for(var i in records){
+            let record = records[i];
+            if(record.score_team == "ally"){
+                m += 1;
+            }
+            else if (record.score_team == "enemy"){
+                g += 1;
+            }
+            if((m >= 25 || g >= 25) && (m - g >= 2 || g - m >= 2)){
+                g_scores.push(g);
+                m = 0;
+                g = 0;
+            }
+        }
+        if(!game.confirm)
+            g_scores.push(g);
+        return res.send(g_scores);
+    }
+    else{
+        return res.status(400).send({status:'failed',msg:'game not owned'});
+    }
+})
+
+router.get('/game/:gid/records', async function(req, res){
+    let gid = req.params.gid;
+    let cond = req.query.cond;
+    if(req.user.team.games.includes(gid)){
+        let game = await Game.findById(gid).exec();
+        var records = await game.getRecordsOf(cond);
+        var count = records.length;
+        return res.send({
+            count: count,
+            records: records
+        });
+    }
+    else{
+        return res.status(400).send({status:'failed',msg:'game not owned'});
+    }    
+})
+
+router.get('/game/:gid/m_player', async function(req, res){
+    let gid = req.params.gid;
+    if(req.user.team.games.includes(gid)){
+        let game = await Game.findById(gid).exec();
+        return res.send(game.m_players);
+    }
+    else{
+        return res.status(400).send({status:'failed',msg:'game not owned'});
+    }    
 })
 
 router.post('/game/:gid/m_player', async function(req, res) {
@@ -38,7 +184,9 @@ router.post('/game/:gid/m_player', async function(req, res) {
     }
     if(req.user.team.games.includes(gid)){
         let game = await Game.findById(gid).exec();
-        console.log(game);
+        if(game.m_players.filter(p => p.player == pid).length != 0){
+            return res.send(game);
+        }
         game.m_players.push(player);
         game.save(function(err) {
             if(err) {
@@ -74,9 +222,9 @@ router.post('/game/:gid/g_player', async function(req, res) {
 });
 
 
-router.put('/game/:gid/g_point', async function(req, res) {
+router.post('/game/:gid/g_point', async function(req, res) {
     let gid = req.params.gid, new_point = req.body.point;
-    Game.update({_id: gid}, {g_point: new_point}, function(err, result){
+    Game.updateOne({_id: gid}, {g_point: new_point}, function(err, result){
         if(err){
             res.status(400).send({status:'failed',msg:err.message})
         }
@@ -86,9 +234,9 @@ router.put('/game/:gid/g_point', async function(req, res) {
     })
 });
 
-router.put('/game/:gid/m_point', async function(req, res) {
+router.post('/game/:gid/m_point', async function(req, res) {
     let gid = req.params.gid, new_point = req.body.point;
-    Game.update({_id: gid}, {m_point: new_point}, function(err, result){
+    Game.updateOne({_id: gid}, {m_point: new_point}, function(err, result){
         if(err){
             res.status(400).send({status:'failed',msg:err.message})
         }
@@ -103,12 +251,23 @@ router.post('/game/:gid/record', async function(req, res) {
     if(req.user.team.games.includes(gid)){
         let game = await Game.findById(gid).exec();
         let record = await Record.create(req.body);
+        let pid = record.maker;
+        let player = await Player.findById(pid).exec();
+        if(player)
+            player.records.push(record._id);
         game.records.push(record._id);
         game.save(async function(err) {
             if(err) {
                 return res.status(400).send({status:'failed',msg:err.message}).end();
             }
-            await game.getRecords();
+            else{
+                if(player)
+                    player.save(async function(err) {
+                        if(err){
+                            return res.status(400).send({status:'failed',msg:err.message}).end();
+                        }
+                    })
+            }
             return res.send(game);
         });
     }else{
@@ -141,5 +300,31 @@ router.post('/game/:gid/records', async function(req, res) {
     }
 });
 
+router.post('/game/:gid/record/undo', async function(req, res){
+    let gid = req.params.gid;
+    if(req.user.team.games.includes(gid)){
+        let game = await Game.findById(gid).exec();
+        let removal = game.records.pop();
+        Record.findOne({_id: removal}, async function(err, doc){
+            if(err){
+                return res.status(400).send({status:'failed',msg:err.message}).end();
+            }
+            if(!doc){
+                return res.status(400).send({status:'failed',msg:'The record doesn\'t exist'}).end();
+            }
+            removal = doc;
+            doc.remove();
+            return res.send(removal);      
+        });
+        game.save(async function(err) {
+            if(err) {
+                return res.status(400).send({status:'failed',msg:err.message}).end();
+            }
+        });  
+    }
+    else{
+        return res.status(400).send({status:'failed',msg:'game not owned'});
+    }
+})
 
 module.exports = router;
